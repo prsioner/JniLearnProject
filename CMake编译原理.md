@@ -116,7 +116,7 @@ externalNativeBuild {
 cmake 指令不区分大小写
 
 ####1.示例工程 
-[CMakeTestProjects]()
+[CMakeTestProjects](https://github.com/prsioner/CMakeTestProjects)
 1.cmake文件,注意，文件名必须是 CMakeLists.txt
 2.编辑cmakelists.txt文件
 ```
