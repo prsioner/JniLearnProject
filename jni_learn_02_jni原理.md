@@ -24,8 +24,45 @@ C编译之后就是：sendCallBackCmd();
 用于定义jni函数的可见性，"default"和"hidden"对应与java 中的public和private
 
 
-####3.C/C++调用java的方法时，需要使用反射
+####3.动态注册与静态注册
 eg:
+
+动态注册和静态注册都是为了让java定义的jni方法和c++ 内实现的jni方法做一个映射关系，
+动态注册native方法形式不同，需要手动从JavaVM 虚拟机引擎中获取jniEnv环境
+动态注册代码示例 
+java 中定义了一个
+public native String stringFromJNI();
+那么native-lib.cpp中就得这样注册
+```
+jstring stringFromJNI(
+        JNIEnv* env,
+        jobject /* this */) {
+    std::string hello = "Hello from C++";
+    return env->NewStringUTF(hello.c_str());
+}
+static const JNINativeMethod gMethods[] ={
+{
+    "stringFromJNI",
+    "()Ljava/lang/String",
+    "(jstring*)stringFromJNI"
+}
+
+};
+
+JNIEXPORT jint JNI_Onload(JavaVM * vm,void* reserved){
+  JniEnv *jniEnv = NULL;
+  if(vm->getEnv(&jniEnv,JNI_VERSION_1_4)!=JNI_OK){
+  return -1
+  }
+  jclass clazz = env-> FindClass("com/prsioner/jnilearnproject/MainActivity")
+    env->RegisterNatives(clazz,gMethods,1);
+
+  return JNI_VERSION_1_4;
+}
+```
+
+
+下面的是静态注册
 java层代码:
 ```
 
@@ -44,13 +81,15 @@ callBackBtn.setOnClickListener(v -> {
         Toast.makeText(MainActivity.this,"call back by jni code:"+code,Toast.LENGTH_SHORT).show();
     }
 ```
-native-lib.cpp代码:
+native-lib.cpp代码：
+
 ```
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_prsioner_jnilearnproject_MainActivity_sendCallBackCmd(JNIEnv *env, jobject thiz) {
 
     jclass activityClass = env->GetObjectClass(thiz);
+    // C/C++调用java的方法时，需要使用反射
     //通过反射的方式获取到方法Id
     jmethodID idText = env->GetMethodID(activityClass,"jniCallBack","(I)V");
     int code = 99;
